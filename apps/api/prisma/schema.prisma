@@ -39,15 +39,15 @@ model Post {
 }
 
 model User {
-  id                  Int       @id @default(autoincrement())
-  email               String    @unique
-  name                String?
-  password            String?
-  hashedPasswordToken String?
-  role                Role      @default(USER)
-  comments            Comment[]
-  posts               Post[]
-  createdAt           DateTime  @default(now()) @db.Timestamp(6)
+  id                 Int       @id @default(autoincrement())
+  email              String    @unique
+  name               String?
+  password           String?
+  hashedRefreshToken String?
+  role               Role      @default(USER)
+  comments           Comment[]
+  posts              Post[]
+  createdAt          DateTime  @default(now()) @db.Timestamp(6)
 }
 
 model Category {
