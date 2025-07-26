@@ -3,8 +3,9 @@
   "ui": "tui",
   "tasks": {
     "build": {
+      "env": ["SESSION_SECRET_KEY_WEB", "NODE_ENV"],
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*", ".env"],
       "outputs": [".next/**", "!.next/cache/**"]
     },
     "lint": {
@@ -15,7 +16,14 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env.development.local",
+        ".env.local",
+        ".env.development",
+        ".env"
+      ]
     }
   }
 }
