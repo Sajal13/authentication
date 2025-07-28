@@ -73,10 +73,13 @@ export async function signin(
   if (response.ok) {
     const result = await response.json();
 
+    console.log(result.role);
+
     await createSession({
       user: {
         id: result.id,
-        name: result.name
+        name: result.name,
+        role: result.role
       },
       accessToken: result.accessToken,
       refreshToken: result.refreshToken

@@ -11,10 +11,11 @@ import { AuthService } from './auth.service';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { LocalAuthGuard } from './guards/local-auth/local-auth.guard';
 import { AuthenticatedRequest } from './types/extended-request.interface';
-import { JwtAuthGuard } from './guards/jwt-auth/jwt-auth.guard';
 import { RefreshAuthGuard } from './guards/refresh-auth/refresh-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth/google-auth.guard';
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { Public } from './decorator/public.decorator';
+import { Roles } from './decorator/roles.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -25,10 +26,15 @@ export class AuthController {
     return await this.authService.register(createUserDto);
   }
 
+  @Public()
   @UseGuards(LocalAuthGuard)
   @Post('signin')
   login(@Req() req: AuthenticatedRequest) {
-    return this.authService.login(req.user.id, req.user.name);
+    return this.authService.login(
+      req.user.id,
+      req.user.name as string,
+      req.user.role
+    );
   }
 
   @UseGuards(RefreshAuthGuard)
@@ -37,7 +43,7 @@ export class AuthController {
     return this.authService.refreshToken(req.user.id, req.user.name);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @Roles('ADMIN', 'EDITOR')
   @Get('protected')
   getAll(@Req() req: AuthenticatedRequest) {
     return {
@@ -52,9 +58,13 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   @Get('google/callback')
   async googleCallback(@Req() req: AuthenticatedRequest, @Res() res: Response) {
-    const response = await this.authService.login(req.user.id, req.user.name);
+    const response = await this.authService.login(
+      req.user.id,
+      req.user.name as string,
+      req.user.role
+    );
     res.redirect(
-      `http://localhost:3000/api/auth/google/callback?userId=${response.id}&name=${response.name}&accessToken=${response.accessToken}&refreshToken=${response.refreshToken}`
+      `http://localhost:3000/api/auth/google/callback?userId=${response.id}&name=${response.name}&accessToken=${response.accessToken}&refreshToken=${response.refreshToken}&role=${response.role}`
     );
   }
 

@@ -12,6 +12,8 @@ import { JwtPayload } from './types/auth-jwt';
 import { JwtService } from '@nestjs/jwt';
 import refreshConfig from './config/refresh.config';
 import { ConfigType } from '@nestjs/config';
+import * as bcrypt from 'bcryptjs';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -35,12 +37,16 @@ export class AuthService {
     return await this.userService.create(createUserDto);
   }
 
-  async login(userId: number, name?: string | null) {
+  async login(userId: number, name: string, role: Role) {
     const { accessToken, refreshToken } = await this.generateToke(userId);
 
+    const hashedRT = await bcrypt.hash(refreshToken, 10);
+
+    await this.userService.updateHashedRefreshToken(userId, hashedRT);
     return {
       id: userId,
       name,
+      role,
       accessToken,
       refreshToken
     };
@@ -64,7 +70,7 @@ export class AuthService {
         message: 'Invalid credentials'
       });
     }
-    return { id: user.id, name: user.name };
+    return { id: user.id, name: user.name, role: user.role };
   }
 
   async generateToke(userId: number) {
@@ -91,11 +97,11 @@ export class AuthService {
 
     return {
       id: user.id,
-      name: user.name
+      role: user.role
     };
   }
 
-  async validateRefreshToken(userId: number) {
+  async validateRefreshToken(userId: number, refreshToken: string) {
     const user = await this.userService.findOne(userId);
 
     if (!user)
@@ -104,6 +110,22 @@ export class AuthService {
         message: 'User Not Found'
       });
 
+    if (!user.hashedRefreshToken) {
+      throw new UnauthorizedException({
+        status: HttpStatus.UNAUTHORIZED,
+        message: 'Refresh token not found'
+      });
+    }
+    const refreshTokenMatched = await bcrypt.compare(
+      refreshToken,
+      user.hashedRefreshToken
+    );
+
+    if (!refreshTokenMatched)
+      throw new UnauthorizedException({
+        status: HttpStatus.UNAUTHORIZED,
+        message: 'Refresh does not match'
+      });
     return {
       id: user.id
     };
@@ -111,6 +133,9 @@ export class AuthService {
 
   async refreshToken(userId: number, name: string | null) {
     const { accessToken, refreshToken } = await this.generateToke(userId);
+
+    const hashedRT = await bcrypt.hash(refreshToken, 10);
+    await this.userService.updateHashedRefreshToken(userId, hashedRT);
 
     return {
       id: userId,

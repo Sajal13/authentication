@@ -3,6 +3,7 @@
 import { jwtVerify, SignJWT } from 'jose';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { Role } from './type';
 
 const secretKey = process.env.SESSION_SECRET_KEY_WEB;
 const encodedKey = new TextEncoder().encode(secretKey);
@@ -11,6 +12,7 @@ export type Session = {
   user: {
     id: string;
     name: string;
+    role: Role
   };
   accessToken: string;
   refreshToken: string;
