@@ -21,6 +21,7 @@ import { Roles } from './decorator/roles.decorator';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('signup')
   async registerUser(@Body() createUserDto: CreateUserDto) {
     return await this.authService.register(createUserDto);
